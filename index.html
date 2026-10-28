@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Friday Invoice Chase Ranker — who to chase this Friday</title>
+  <meta name="description" content="Local-first tool: type overdue invoices, rank who to chase this Friday. 60+ days first. No login, no tracking.">
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #5c5c5c;
+      --line: #d9d4c8;
+      --accent: #0b6e4f;
+      --warn: #9a3412;
+      --top: #14532d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+    h1 { font-size: 1.55rem; margin: 0 0 0.35rem; }
+    .lede { color: var(--muted); margin: 0 0 1.25rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1rem 1.1rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.2rem; }
+    input {
+      width: 100%;
+      padding: 0.5rem 0.55rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font: inherit;
+      background: #fff;
+    }
+    .row-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 0.8fr auto;
+      gap: 0.5rem;
+      align-items: end;
+      margin-bottom: 0.55rem;
+    }
+    @media (max-width: 640px) {
+      .row-grid { grid-template-columns: 1fr 1fr; }
+      .row-grid .span-full { grid-column: 1 / -1; }
+    }
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      padding: 0.5rem 0.75rem;
+      background: #fff;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    button.danger {
+      color: var(--warn);
+      border-color: #f0c9b8;
+      background: #fff7f3;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid var(--line);
+    }
+    th { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+    tr.hot td { background: #ecfdf5; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: var(--top);
+    }
+    .badge.warn { background: #ffedd5; color: var(--warn); }
+    .top3 {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0;
+    }
+    .top3 li {
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 0.45rem;
+      background: #f0fdf4;
+    }
+    .top3 li strong { display: block; margin-bottom: 0.15rem; }
+    .explain { font-size: 0.9rem; color: var(--muted); margin: 0.35rem 0 0.75rem; }
+    footer {
+      margin-top: 1.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); }
+    .empty { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Friday Invoice Chase Ranker</h1>
+    <p class="lede">Type overdue invoices. Rank who to chase this Friday. <strong>60+ days overdue first.</strong> Runs entirely in your browser — no login, no ads, no tracking.</p>
+
+    <section class="card" aria-labelledby="input-heading">
+      <h2 id="input-heading" style="font-size:1.05rem;margin:0 0 0.75rem;">Your invoices</h2>
+      <div id="rows"></div>
+      <div class="actions">
+        <button type="button" id="add-row">+ Add row</button>
+        <button type="button" class="primary" id="rank">Rank Friday chase</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="out-heading" id="output" hidden>
+      <h2 id="out-heading" style="font-size:1.05rem;margin:0 0 0.35rem;">Friday chase order</h2>
+      <p class="explain">Sorted by days overdue (desc), then amount. Invoices <strong>60+ days</strong> overdue get priority callouts — those are the highest cash-risk for freelancers.</p>
+      <h3 style="font-size:0.95rem;margin:0.75rem 0 0.35rem;">Top 3 to chase</h3>
+      <ol class="top3" id="top3"></ol>
+      <h3 style="font-size:0.95rem;margin:1rem 0 0.35rem;">Full ranked table</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Client</th>
+              <th>Amount (USD)</th>
+              <th>Days overdue</th>
+              <th>Flag</th>
+            </tr>
+          </thead>
+          <tbody id="ranked-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p><strong>Disclosure:</strong> Not tax, legal, or debt-collection advice. Pre-filled EXAMPLE rows are fictional. You decide whom to contact and how.</p>
+      <p>
+        Source (MIT): <a href="https://github.com/SirMem/friday-invoice-chase-tool">github.com/SirMem/friday-invoice-chase-tool</a>
+        · Free Excel aging sample: <a href="https://github.com/SirMem/freelancer-invoice-aging-sample">aging sample</a>
+        · Hub: <a href="https://sirmem.github.io/freelancer-money-sheets/zh-xuesheng-sihuo-zhuizhang.html">CN bridge</a>
+        · Optional paid Friday tracker ($6 on Gumroad) exists separately; <em>this tool stays permanently free</em>.
+      </p>
+    </footer>
+  </main>
+
+  <script>
+(function () {
+  "use strict";
+
+  var EXAMPLES = [
+    { client: "Acme Design Co (EXAMPLE)", amount: 2400, days: 75 },
+    { client: "Northwind Studio (EXAMPLE)", amount: 980, days: 42 },
+    { client: "Bright Labs (EXAMPLE)", amount: 1500, days: 18 },
+    { client: "Cedar Media (EXAMPLE)", amount: 620, days: 67 }
+  ];
+
+  var rowsEl = document.getElementById("rows");
+  var addBtn = document.getElementById("add-row");
+  var rankBtn = document.getElementById("rank");
+  var output = document.getElementById("output");
+  var top3El = document.getElementById("top3");
+  var rankedBody = document.getElementById("ranked-body");
+
+  function makeRow(data) {
+    data = data || { client: "", amount: "", days: "" };
+    var wrap = document.createElement("div");
+    wrap.className = "row-grid";
+    wrap.innerHTML =
+      '<div class="span-full">' +
+        '<label>Client</label>' +
+        '<input type="text" class="f-client" placeholder="Client name" value="' + escapeAttr(data.client) + '">' +
+      "</div>" +
+      "<div>" +
+        '<label>Amount (USD)</label>' +
+        '<input type="number" class="f-amount" min="0" step="0.01" placeholder="0" value="' + escapeAttr(data.amount) + '">' +
+      "</div>" +
+      "<div>" +
+        '<label>Days overdue</label>' +
+        '<input type="number" class="f-days" min="0" step="1" placeholder="0" value="' + escapeAttr(data.days) + '">' +
+      "</div>" +
+      '<div><label>&nbsp;</label><button type="button" class="danger f-remove" title="Remove row">Remove</button></div>';
+    wrap.querySelector(".f-remove").addEventListener("click", function () {
+      wrap.remove();
+    });
+    rowsEl.appendChild(wrap);
+  }
+
+  function escapeAttr(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;");
+  }
+
+  function escapeHtml(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function readRows() {
+    var nodes = rowsEl.querySelectorAll(".row-grid");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var client = (n.querySelector(".f-client").value || "").trim();
+      var amount = parseFloat(n.querySelector(".f-amount").value);
+      var days = parseInt(n.querySelector(".f-days").value, 10);
+      if (!client && (isNaN(amount) || amount === 0) && (isNaN(days) || days === 0)) continue;
+      if (!client) client = "(unnamed)";
+      if (isNaN(amount) || amount < 0) amount = 0;
+      if (isNaN(days) || days < 0) days = 0;
+      out.push({ client: client, amount: amount, days: days });
+    }
+    return out;
+  }
+
+  function rankRows(list) {
+    return list.slice().sort(function (a, b) {
+      if (b.days !== a.days) return b.days - a.days;
+      return b.amount - a.amount;
+    });
+  }
+
+  function money(n) {
+    return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function render(ranked) {
+    if (!ranked.length) {
+      output.hidden = false;
+      top3El.innerHTML = '<li class="empty">No rows to rank. Add at least one invoice.</li>';
+      rankedBody.innerHTML = "";
+      return;
+    }
+
+    var topHtml = "";
+    var top = ranked.slice(0, 3);
+    for (var i = 0; i < top.length; i++) {
+      var r = top[i];
+      var why =
+        r.days >= 60
+          ? "60+ days overdue — highest cash-risk; chase first this Friday."
+          : r.days >= 30
+            ? "30–59 days — next wave after 60+ accounts."
+            : "Under 30 days — still overdue; chase after hotter accounts.";
+      topHtml +=
+        "<li><strong>#" +
+        (i + 1) +
+        " · " +
+        escapeHtml(r.client) +
+        "</strong>" +
+        money(r.amount) +
+        " · " +
+        r.days +
+        " days overdue<br><span style=\"font-size:0.85rem;color:#5c5c5c;\">" +
+        why +
+        "</span></li>";
+    }
+    top3El.innerHTML = topHtml;
+
+    var body = "";
+    for (var j = 0; j < ranked.length; j++) {
+      var row = ranked[j];
+      var hot = row.days >= 60;
+      var flag = hot
+        ? '<span class="badge warn">60+</span>'
+        : row.days >= 30
+          ? '<span class="badge">30+</span>'
+          : "—";
+      body +=
+        '<tr class="' +
+        (hot ? "hot" : "") +
+        '"><td>' +
+        (j + 1) +
+        "</td><td>" +
+        escapeHtml(row.client) +
+        "</td><td>" +
+        money(row.amount) +
+        "</td><td>" +
+        row.days +
+        "</td><td>" +
+        flag +
+        "</td></tr>";
+    }
+    rankedBody.innerHTML = body;
+    output.hidden = false;
+  }
+
+  addBtn.addEventListener("click", function () {
+    makeRow();
+  });
+  rankBtn.addEventListener("click", function () {
+    render(rankRows(readRows()));
+  });
+
+  for (var e = 0; e < EXAMPLES.length; e++) makeRow(EXAMPLES[e]);
+  render(rankRows(readRows()));
+})();
+  </script>
+</body>
+</html>
