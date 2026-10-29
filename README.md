@@ -21,6 +21,7 @@ Type rows (client, amount, days overdue) → click **Rank Friday chase** → get
 
 - **Tool:** https://sirmem.github.io/friday-invoice-chase-tool/
 - **Source:** https://github.com/SirMem/friday-invoice-chase-tool
+- **Share Your Startup (queued):** https://shareyourstartup.com/s/friday-invoice-chase-ranker (badge on tool page)
 
 ## How ranking works
 
