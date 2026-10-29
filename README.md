@@ -22,6 +22,7 @@ Type rows (client, amount, days overdue) → click **Rank Friday chase** → get
 - **Tool:** https://sirmem.github.io/friday-invoice-chase-tool/
 - **Source:** https://github.com/SirMem/friday-invoice-chase-tool
 - **CurlShip (LIVE free):** https://curlship.com/l/8311 (badge on tool page for dofollow)
+- **submitby.ai (badge route draft):** https://submitby.ai/projects/5c24cee8-0140-4669-a4fd-635957c04a29 (free badge on tool page)
 - **Share Your Startup (queued):** https://shareyourstartup.com/s/friday-invoice-chase-ranker (badge on tool page)
 
 ## How ranking works
